@@ -1,4 +1,4 @@
-# Numerical Integral
+# Numerical Integral Evaluator
 
 C++ code to solve integrals via the basic definition of a definite integral.
 
