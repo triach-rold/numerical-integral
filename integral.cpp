@@ -8,7 +8,6 @@
 class Parser {
 public:
     Parser(const std::string& expression) : expr(expression), pos(0) {}
-
     double parse() {
         pos = 0;
         return parseExpression();
@@ -16,7 +15,6 @@ public:
 private:
     std::string expr;
     size_t pos;
-
     double parseExpression() {
         double result = parseTerm();
         while (pos < expr.size()) {
@@ -87,37 +85,56 @@ private:
         }
         return std::stod(expr.substr(startPos, pos - startPos));
     }
-
     double parseFunction() {
         std::string func;
         while (pos < expr.size() && isalpha(expr[pos])) {
             func += expr[pos++];
         }
-
         if (func == "e") {
             return M_E;
         }
-
         if (pos < expr.size() && expr[pos] == '(') {
             pos++;
-            double arg = parseExpression();
-            if (pos < expr.size() && expr[pos] == ')') {
-                pos++;
+            if (func == "logb") {
+                double base = parseExpression();
+                if (pos < expr.size() && expr[pos] == ')') {
+                    pos++;
+                } else {
+                    throw std::runtime_error("Mismatched parentheses after logb base");
+                }
+                if (pos < expr.size() && expr[pos] == '(') {
+                    pos++;
+                    double arg = parseExpression();
+                    if (pos < expr.size() && expr[pos] == ')') {
+                        pos++;
+                        return log(arg) / log(base);
+                    } else {
+                        throw std::runtime_error("Mismatched parentheses after logb argument");
+                    }
+                } else {
+                    throw std::runtime_error("Missing parentheses for logb argument");
+                }
             } else {
-                throw std::runtime_error("Mismatched parentheses");
+                double arg = parseExpression();
+                if (pos < expr.size() && expr[pos] == ')') {
+                    pos++;
+                } else {
+                    throw std::runtime_error("Mismatched parentheses");
+                }
+                if (func == "sin") return sin(arg);
+                if (func == "cos") return cos(arg);
+                if (func == "tan") return tan(arg);
+                if (func == "cosec") return 1.0 / sin(arg);
+                if (func == "sec") return 1.0 / cos(arg);
+                if (func == "cot") return 1.0 / tan(arg);
+                if (func == "sqrt") return sqrt(arg);
+                if (func == "abs") return fabs(arg);
+                if (func == "exp") return exp(arg);
+                if (func == "sgn") return (arg > 0) - (arg < 0);
+                if (func == "log") return log(arg);
+                if (func == "ln") return log(arg);
+                throw std::runtime_error("Unknown function: " + func);
             }
-            if (func == "sin") return sin(arg);
-            if (func == "cos") return cos(arg);
-            if (func == "tan") return tan(arg);
-            if (func == "cosec") return 1.0 / sin(arg);
-            if (func == "sec") return 1.0 / cos(arg);
-            if (func == "cot") return 1.0 / tan(arg);
-            if (func == "sqrt") return sqrt(arg);
-            if (func == "abs") return fabs(arg);
-            if (func == "exp") return exp(arg);
-            if (func == "sgn") return (arg > 0) - (arg < 0);
-
-            throw std::runtime_error("Unknown function: " + func);
         }
 
         throw std::runtime_error("Unexpected identifier: " + func);
@@ -141,7 +158,6 @@ double simpsons_rule(const std::string& expression, double lower_bound, double u
     }
     double h = (upper_bound - lower_bound) / n;
     double sum = evaluate_function(expression, lower_bound) + evaluate_function(expression, upper_bound);
-
     for (int i = 1; i < n; i++) {
         double x = lower_bound + i * h;
         if (i % 2 == 0) {
@@ -152,9 +168,19 @@ double simpsons_rule(const std::string& expression, double lower_bound, double u
     }
     return sum * h / 3;
 }
+double trapezoidal_rule(const std::string& expression, double lower_bound, double upper_bound, int n) {
+    double h = (upper_bound - lower_bound) / n;
+    double sum = 0.5 * (evaluate_function(expression, lower_bound) + evaluate_function(expression, upper_bound));
+
+    for (int i = 1; i < n; i++) {
+        double x = lower_bound + i * h;
+        sum += evaluate_function(expression, x);
+    }
+    return sum * h;
+}
 int main(int argc, char* argv[]) {
-    if (argc != 4 && argc != 6 && argc != 7) {
-        std::cerr << "\033[1;31mUsage:\033[0m " << argv[0] << " \"function\" (lower_bound) (upper_bound) [--increment (increment_number)] [--simpson]" << std::endl;
+    if (argc < 4 || argc > 7) {
+        std::cerr << "\033[1;31mUsage:\033[0m " << argv[0] << " \"function\" (lower_bound) (upper_bound) [--increment (increment_number)] [--simpson] [--trapezoid]" << std::endl;
         std::cout << "\033[1;36mNote: The increment flag is optional and set to 1000000 by default. Bigger numbers make the result more accurate, but evaluation time will also increase.\033[0m" << std::endl;
         return 1;
     }
@@ -163,18 +189,23 @@ int main(int argc, char* argv[]) {
     double upper_bound = std::stod(argv[3]);
     double increment = 1000000; // default increment value
     bool use_simpsons = false;
-
+    bool use_trapezoidal = false;
     for (int i = 4; i < argc; i++) {
         if (std::string(argv[i]) == "--increment" && i + 1 < argc) {
             increment = std::stod(argv[++i]);
         } else if (std::string(argv[i]) == "--simpson") {
             use_simpsons = true;
+        } else if (std::string(argv[i]) == "--trapezoid") {
+            use_trapezoidal = true;
         }
     }
     try {
         if (use_simpsons) {
             double result = simpsons_rule(function, lower_bound, upper_bound, static_cast<int>(increment));
-            std::cout << "Result by simpson's rule is " << result << std::endl;
+            std::cout << "Result by Simpson's rule is " << result << std::endl;
+        } else if (use_trapezoidal) {
+            double result = trapezoidal_rule(function, lower_bound, upper_bound, static_cast<int>(increment));
+            std::cout << "Result by the trapezoidal rule is " << result << std::endl;
         } else {
             double h = (upper_bound - lower_bound) / increment;
             double sum = 0;
@@ -189,6 +220,5 @@ int main(int argc, char* argv[]) {
         std::cerr << "\033[1;31mError:\033[0m " << e.what() << std::endl;
         return 1;
     }
-
     return 0;
 }
