@@ -16,3 +16,19 @@ C++ code to solve integrals via the basic definition of a definite integral.
 1. The file is in C++. It requires you to have the GNU C++ compiler (doesn't need to be GNU, but it's tested on GNU) so that it can be turned into an executable for your computer to run.
 2. Assuming you already have GNU, open up your terminal of choice and put in the command `g++ integral.cpp` in the directory where you've saved the file. (You can use the `cd` command to navigate through your directories.)
 3. Assuming the last step went smoothly and without errors (which it should), you need to type in `./a.out (function) (upper_bound) (lower_bound) --increment (increment_steps_value) --simpson --trapezoid`. And it should calculate. Note that the increment flag is optional and it is set to 1,000,000 by default. Bigger numbers make the result more accurate, but evaluation time will also increase. The simpson flag is also optional (specify it to evaluate by simpson's rule, but this is disabled by default). The trapezoid flag is also optional (specify it to evaluate by the trapezoidal rule- but this is also disabled by default). Please note that you can only use one mode at a time.
+
+## Supported Functions?
+
+* sin(x)
+* cos(x)
+* tan(x)
+* cosec(x)
+* sec(x)
+* cot(x)
+* log(x)
+* ln(x)
+* log(base)(x)
+* exp(x)
+* sqrt(x)
+* abs(x)
+* sgn(x)
