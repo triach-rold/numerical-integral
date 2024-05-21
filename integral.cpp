@@ -133,6 +133,15 @@ private:
                 if (func == "sgn") return (arg > 0) - (arg < 0);
                 if (func == "log") return log(arg);
                 if (func == "ln") return log(arg);
+                if (func == "asin") return asin(arg);
+                if (func == "acos") return acos(arg);
+                if (func == "atan") return atan(arg);
+                if (func == "sinh") return sinh(arg);
+                if (func == "cosh") return cosh(arg);
+                if (func == "tanh") return tanh(arg);
+                if (func == "asinh") return asinh(arg);
+                if (func == "acosh") return acosh(arg);
+                if (func == "atanh") return atanh(arg);
                 throw std::runtime_error("Unknown function: " + func);
             }
         }
@@ -140,6 +149,7 @@ private:
         throw std::runtime_error("Unexpected identifier: " + func);
     }
 };
+
 double evaluate_function(const std::string& expression, double x) {
     std::string replacedExpression;
     for (size_t i = 0; i < expression.size(); ++i) {
@@ -152,6 +162,7 @@ double evaluate_function(const std::string& expression, double x) {
     Parser parser(replacedExpression);
     return parser.parse();
 }
+
 double simpsons_rule(const std::string& expression, double lower_bound, double upper_bound, int n) {
     if (n % 2 != 0) {
         throw std::invalid_argument("Simpson's rule requires an even number of intervals.");
@@ -168,19 +179,20 @@ double simpsons_rule(const std::string& expression, double lower_bound, double u
     }
     return sum * h / 3;
 }
+
 double trapezoidal_rule(const std::string& expression, double lower_bound, double upper_bound, int n) {
     double h = (upper_bound - lower_bound) / n;
     double sum = 0.5 * (evaluate_function(expression, lower_bound) + evaluate_function(expression, upper_bound));
-
     for (int i = 1; i < n; i++) {
         double x = lower_bound + i * h;
         sum += evaluate_function(expression, x);
     }
     return sum * h;
 }
+
 int main(int argc, char* argv[]) {
     if (argc < 4 || argc > 7) {
-        std::cerr << "\033[1;31mUsage:\033[0m " << argv[0] << " \"function\" (lower_bound) (upper_bound) [--increment (increment_number)] [--simpson] [--trapezoid]" << std::endl;
+        std::cerr << "\033[1;31mUsage:\033[0m " << argv[0] << " \"function\" (lower_bound) (upper_bound) [--increment (increment_number)] [--simpson] [--trapezoid] [--all]" << std::endl;
         std::cout << "\033[1;36mNote: The increment flag is optional and set to 1000000 by default. Bigger numbers make the result more accurate, but evaluation time will also increase.\033[0m" << std::endl;
         return 1;
     }
@@ -190,6 +202,7 @@ int main(int argc, char* argv[]) {
     double increment = 1000000; // default increment value
     bool use_simpsons = false;
     bool use_trapezoidal = false;
+    bool use_all = false;
     for (int i = 4; i < argc; i++) {
         if (std::string(argv[i]) == "--increment" && i + 1 < argc) {
             increment = std::stod(argv[++i]);
@@ -197,6 +210,8 @@ int main(int argc, char* argv[]) {
             use_simpsons = true;
         } else if (std::string(argv[i]) == "--trapezoid") {
             use_trapezoidal = true;
+        } else if (std::string(argv[i]) == "--all") {
+            use_all = true;
         }
     }
     try {
@@ -206,10 +221,19 @@ int main(int argc, char* argv[]) {
         } else if (use_trapezoidal) {
             double result = trapezoidal_rule(function, lower_bound, upper_bound, static_cast<int>(increment));
             std::cout << "Result by the trapezoidal rule is " << result << std::endl;
+        } else if (use_all) {
+            double h = (upper_bound - lower_bound) / increment;
+            double sum = 0;
+            for (int i = 0; i <= increment; i++) {
+                double x = lower_bound + (i * h);
+                sum += evaluate_function(function, x) * h;
+            }
+            std::cout << "Result of the integral (by numerical area sum) is " << sum << std::endl;
+            std::cout << "Result by Simpson's rule is " << simpsons_rule(function, lower_bound, upper_bound, static_cast<int>(increment)) << std::endl;
+            std::cout << "Result by the trapezoidal rule is " << trapezoidal_rule(function, lower_bound, upper_bound, static_cast<int>(increment)) << std::endl;
         } else {
             double h = (upper_bound - lower_bound) / increment;
             double sum = 0;
-
             for (int i = 0; i <= increment; i++) {
                 double x = lower_bound + (i * h);
                 sum += evaluate_function(function, x) * h;
